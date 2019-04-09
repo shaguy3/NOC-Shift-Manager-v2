@@ -59,6 +59,11 @@ def assign_shifts():
         for emp in all_emps:
             model.Add(shifts[(shift, emp)] + shifts[(shift + 2, emp)] <= 1)
 
+    # Constraint no'5: Minimize 8-8.
+    for shift in range(19):
+        for emp in all_emps:
+            model.AddProdEquality(0, (shifts[(shift, emp)], shifts[(shift + 2, emp)]))
+
     # Creating the solver and solving the model. the solver prints the first solution it finds.
     solver = cp_model.CpSolver()
     solution_printer = SolutionPrinter(shifts, all_shifts, all_emps)
