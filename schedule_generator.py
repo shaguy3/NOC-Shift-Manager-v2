@@ -27,6 +27,13 @@ def assign_shifts():
     shifts = {}
     all_shifts = range(21)
     all_emps = range(7)
+    shift_blocks = [[0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]]
 
     # Declaring the variables.
     for shift in all_shifts:
@@ -49,17 +56,27 @@ def assign_shifts():
         model.Add(min_number_of_shifts <= number_of_shifts_worked)
         model.Add(number_of_shifts_worked <= max_number_of_shifts)
 
-    # Constraint no'3: The same employee cant work two consecutive shifts.
+    # Constraint no'3: maximum 2 nights per employee.
+    for emp in all_emps:
+        number_of_nights_worked = sum(shifts[(shift, emp)] for shift in [2, 5, 8, 11, 14, 17, 20])
+        model.Add(number_of_nights_worked <= 2)
+
+    # Constraint no'4: The same employee cant work two consecutive shifts.
     for shift in range(20):
         for emp in all_emps:
             model.Add(shifts[(shift, emp)] + shifts[(shift + 1, emp)] <= 1)
 
-    # Constraint no'4: No night after morning.
+    # Constraint no'5: No night after morning.
     for shift in [0, 3, 6, 9, 12, 15, 18]:
         for emp in all_emps:
             model.Add(shifts[(shift, emp)] + shifts[(shift + 2, emp)] <= 1)
 
-    # Constraint no'5: Minimize 8-8.
+    # Constraint no'6: Employees don't work in shifts that they have blocked.
+    for emp in all_emps:
+        for shift in all_shifts:
+            model.AddProdEquality(0, (shift_blocks[emp][shift], shifts[(shift, emp)]))
+
+    # Constraint no'7: Minimize 8-8. ### NOTE: this does not work. right now the setting is no 8-8 allowed. ###
     for shift in range(19):
         for emp in all_emps:
             model.AddProdEquality(0, (shifts[(shift, emp)], shifts[(shift + 2, emp)]))
